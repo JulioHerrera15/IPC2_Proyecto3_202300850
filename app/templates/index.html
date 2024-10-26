@@ -5,50 +5,67 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
-    <title>Tecnologías Chapinas S.A</title>
+<title>Tecnologías Chapinas S.A</title>
 </head>
-<body>
-    <nav class="bg-gray-800">
-        <div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
-          <div class="relative flex h-16 items-center justify-between">
-            <div class="absolute inset-y-0 left-0 flex items-center sm:hidden">
-              <!-- Mobile menu button-->
-              <button type="button" class="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white" aria-controls="mobile-menu" aria-expanded="false">
-                <span class="absolute -inset-0.5"></span>
-                <span class="sr-only">Open main menu</span>
-                <!--
-                  Icon when menu is closed.
-      
-                  Menu open: "hidden", Menu closed: "block"
-                -->
-                <svg class="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                </svg>
-                <!--
-                  Icon when menu is open.
-      
-                  Menu open: "block", Menu closed: "hidden"
-                -->
-                <svg class="hidden h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                </svg>
-              </button>
+<body class="dark:bg-slate-900 text-white">
+    {% include "navbar.html" %}
+    <div class="container mx-auto m-10">
+        <h1 class="text-4xl text-center mt-10">Bienvenido a Tecnologías Chapinas S.A</h1>
+        <p class="text-center mt-5">Carga un archivo XML para empezar</p>
+        
+        <!-- Formulario de carga de archivo y botón de procesar -->
+        <form action="/procesar_xml" method="post" enctype="multipart/form-data" class="space-y-4 mt-10">
+            {% csrf_token %}
+            <div class="relative group">
+                <label for="archivo" class="block text-sm font-medium text-gray-300 mb-2">Archivo XML</label>
+                <input type="file" required name="archivo" accept=".xml" id="archivo" 
+                       class="block w-full text-sm text-gray-400
+                              file:mr-4 file:py-2 file:px-4
+                              file:rounded-full file:border-0
+                              file:text-sm file:font-semibold
+                              file:bg-blue-700
+                              file:text-gray-200
+                              hover:file:bg-blue-800                              
+                              cursor-pointer
+                              border-2 border-slate-600 rounded-full
+                              transition-all duration-300
+                              focus:outline-none focus:border-blue-500">
             </div>
-            <div class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
-              <div class="flex flex-shrink-0 items-center">
-                <img class="h-8 w-auto" src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500" alt="Your Company">
-              </div>
-              <div class="hidden sm:ml-6 sm:block">
-                <div class="flex space-x-4">
-                  <!-- Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" -->
-                  <a href="#" class="rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white" aria-current="page">Cargar archivo</a>
-                  <a href="#" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Peticiones</a>
-                  <a href="#" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Ayuda</a>                  
+            <button type="submit" class="w-full relative group overflow-hidden rounded-full">
+                <div class="absolute inset-0 bg-blue-500 group-hover:bg-blue-700 transition-transform duration-300 group-hover:scale-105"></div>
+                <div class="relative px-4 py-2 flex items-center justify-center text-white font-semibold">
+                    <i class="bi bi-upload mr-2 group-hover:animate-bounce"></i>
+                    Procesar archivo
+                    <div class="absolute inset-0 rounded-full animate-glow opacity-0 group-hover:opacity-100"></div>
                 </div>
-              </div>
-            </div>            
-          </div>
-        </div>       
-      </nav>
+            </button>
+        </form>
+
+        <!-- Contenido de las columnas -->
+        <div class="flex space-x-4 mt-10">
+            <!-- Primera columna -->
+            <div class="w-1/2 bg-gray-500/50 border rounded-xl p-8">
+                <h2 class="text-2xl font-bold text-center">Entrada</h2>
+                <div id="xml-content" class="p-4 border border-gray-300 rounded bg-gray-100 h-96 dark:bg-slate-800 overflow-auto">
+                    {% if xml_content %}
+                        {{ xml_content|safe }}
+                    {% else %}
+                        <p class="text-center text-gray-400">No se ha cargado ningún archivo</p>
+                    {% endif %}
+                </div>
+            </div>
+            <!-- Segunda columna -->
+            <div class="w-1/2 bg-gray-500/50 border rounded-xl p-8">
+                <h2 class="text-2xl font-bold text-center">Salida</h2>
+                <div id="processed-content" class="p-4 border border-gray-300 rounded bg-gray-100 dark:bg-slate-800 h-96 overflow-auto">
+                    {% if processed_content %}
+                        {{ processed_content|safe }}
+                    {% else %}
+                        <p class="text-center text-gray-400">No se ha procesado ningún archivo</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
