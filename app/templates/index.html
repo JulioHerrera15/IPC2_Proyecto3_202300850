@@ -5,16 +5,16 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
-<title>Tecnologías Chapinas S.A</title>
+    <title>Tecnologías Chapinas S.A</title>
 </head>
 <body class="dark:bg-slate-900 text-white">
     {% include "navbar.html" %}
     <div class="container mx-auto m-10">
-        <h1 class="text-4xl text-center mt-10">Bienvenido a Tecnologías Chapinas S.A</h1>
+        <h1 class="text-4xl font-bold text-center mt-10">Bienvenido a Tecnologías Chapinas S.A</h1>
         <p class="text-center mt-5">Carga un archivo XML para empezar</p>
         
         <!-- Formulario de carga de archivo y botón de procesar -->
-        <form action="/procesar_xml" method="post" enctype="multipart/form-data" class="space-y-4 mt-10">
+        <form action="{% url 'procesar_datos' %}" method="post" enctype="multipart/form-data" class="space-y-4 mt-10">                                             
             {% csrf_token %}
             <div class="relative group">
                 <label for="archivo" class="block text-sm font-medium text-gray-300 mb-2">Archivo XML</label>
@@ -34,21 +34,25 @@
             <button type="submit" class="w-full relative group overflow-hidden rounded-full">
                 <div class="absolute inset-0 bg-blue-500 group-hover:bg-blue-700 transition-transform duration-300 group-hover:scale-105"></div>
                 <div class="relative px-4 py-2 flex items-center justify-center text-white font-semibold">
-                    <i class="bi bi-upload mr-2 group-hover:animate-bounce"></i>
                     Procesar archivo
-                    <div class="absolute inset-0 rounded-full animate-glow opacity-0 group-hover:opacity-100"></div>
                 </div>
             </button>
         </form>
+
+        {% if error %}
+        <div class="mt-4 p-4 bg-red-500 text-white rounded-lg">
+            {{ error }}
+        </div>
+        {% endif %}
 
         <!-- Contenido de las columnas -->
         <div class="flex space-x-4 mt-10">
             <!-- Primera columna -->
             <div class="w-1/2 bg-gray-500/50 border rounded-xl p-8">
                 <h2 class="text-2xl font-bold text-center">Entrada</h2>
-                <div id="xml-content" class="p-4 border border-gray-300 rounded bg-gray-100 h-96 dark:bg-slate-800 overflow-auto">
+                <div class="p-4 border border-gray-300 rounded m-5 bg-gray-100 h-96 dark:bg-slate-800 overflow-auto">
                     {% if xml_content %}
-                        {{ xml_content|safe }}
+                        <pre class="text-gray-800 dark:text-gray-200">{{ xml_content }}</pre>
                     {% else %}
                         <p class="text-center text-gray-400">No se ha cargado ningún archivo</p>
                     {% endif %}
@@ -57,9 +61,9 @@
             <!-- Segunda columna -->
             <div class="w-1/2 bg-gray-500/50 border rounded-xl p-8">
                 <h2 class="text-2xl font-bold text-center">Salida</h2>
-                <div id="processed-content" class="p-4 border border-gray-300 rounded bg-gray-100 dark:bg-slate-800 h-96 overflow-auto">
+                <div class="p-4 border border-gray-300 rounded m-5 bg-gray-100 dark:bg-slate-800 h-96 overflow-auto">
                     {% if processed_content %}
-                        {{ processed_content|safe }}
+                        <pre class="text-gray-800 dark:text-gray-200">{{ processed_content }}</pre>
                     {% else %}
                         <p class="text-center text-gray-400">No se ha procesado ningún archivo</p>
                     {% endif %}
