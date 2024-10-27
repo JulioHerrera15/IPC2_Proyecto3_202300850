@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from .forms import FileForm
 import requests
 import logging
@@ -22,6 +22,21 @@ def index(request):
         'error': ''
     }
     return render(request, 'index.html', context)
+
+def reset(request):
+    # Limpiar la sesión de Django
+    request.session.flush()
+    
+    # Limpiar la sesión de Flask
+    try:
+        response = flask_session.get(f'{api}/reset_session')
+        if response.status_code != 200:
+            logger.error(f"Error al limpiar la sesión de Flask: {response.status_code}")
+    except Exception as e:
+        logger.error(f"Error conectando con Flask para limpiar la sesión: {str(e)}")
+    
+    # Redirigir a la página principal
+    return redirect('index')
 
 def remove_blank_lines(xml_string):
     # Eliminar líneas en blanco y espacios innecesarios
@@ -156,13 +171,18 @@ def resumen_fecha(request):
                     response = flask_session.get(f'{api}/resumen_fecha', params={'fecha': fecha, 'empresa': empresa})
                     if response.status_code == 200:
                         data = response.json()
-                        context.update(data)
+                        if data['total'] == 0:
+                            context['error'] = 'No se encontraron mensajes para la fecha ingresada.'
+                        else:
+                            context.update(data)
                         
                         logger.debug(f"Datos de resumen obtenidos: {data}")
                     else:
                         logger.error(f"Error en la solicitud a Flask: {response.status_code}")
+                        context['error'] = 'Error en la solicitud al servidor.'
                 except Exception as e:
                     logger.error(f"Error conectando con Flask: {str(e)}")
+                    context['error'] = 'Error conectando con el servidor.'
         else:
             logger.error("Error al obtener la lista de empresas desde Flask.")
     except Exception as e:
@@ -171,7 +191,53 @@ def resumen_fecha(request):
     logger.debug(f"Contexto final para la plantilla: {context}")
     return render(request, 'resumen_fecha.html', context)
 
+def resumen_rango_fecha(request):
+    context = {'total': 0, 'positivos': 0, 'negativos': 0, 'neutros': 0, 'empresas': []}
 
+    # Intento de obtener la lista de empresas al cargar la página
+    try:
+        response = flask_session.get(f'{api}/obtener_empresas')
+        if response.status_code == 200:
+            empresas_data = response.json()
+            context['empresas'] = empresas_data.get('empresas', [])
+
+            logger.debug(f"Lista de empresas obtenida: {context['empresas']}")
+
+            if request.method == 'POST':
+                # Recibir los parámetros de la solicitud POST
+                fecha_inicio = request.POST.get('fecha_inicio')
+                fecha_fin = request.POST.get('fecha_fin')
+                empresa = request.POST.get('empresa', 'todas')
+
+                context['fecha_inicio'] = fecha_inicio
+                context['fecha_fin'] = fecha_fin
+                context['empresa'] = empresa
+                logger.debug(f"Parámetros recibidos - Fecha inicio: {fecha_inicio}, Fecha fin: {fecha_fin}, Empresa: {empresa}")
+
+                try:
+                    # Llamar a la API Flask para obtener el resumen de mensajes según fecha y empresa
+                    response = flask_session.get(f'{api}/resumen_rango_fecha', params={'fecha_inicio': fecha_inicio, 'fecha_fin': fecha_fin, 'empresa': empresa})
+                    if response.status_code == 200:
+                        data = response.json()
+                        if data['total'] == 0:
+                            context['error'] = 'No se encontraron mensajes para el rango de fechas ingresado.'
+                        else:
+                            context.update(data)
+
+                        logger.debug(f"Datos de resumen obtenidos: {data}")
+                    else:
+                        logger.error(f"Error en la solicitud a Flask: {response.status_code}")
+                        context['error'] = 'Error en la solicitud al servidor.'
+                except Exception as e:
+                    logger.error(f"Error conectando con Flask: {str(e)}")
+                    context['error'] = 'Error conectando con el servidor.'
+        else:
+            logger.error("Error al obtener la lista de empresas desde Flask.")
+    except Exception as e:
+        logger.error(f"Error conectando con Flask: {str(e)}")
+    
+    logger.debug(f"Contexto final para la plantilla: {context}")
+    return render(request, 'resumen_rango_fecha.html', context)
 
 def ayuda(request):
     return render(request, 'ayuda.html')

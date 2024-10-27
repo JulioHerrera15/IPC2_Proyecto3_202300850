@@ -21,12 +21,12 @@
 
         <!-- Formulario de filtros -->
         <div class="max-w-2xl mx-auto mb-12 backdrop-blur-sm bg-white/5 rounded-2xl p-8 border border-white/10 shadow-xl">
-            <form method="POST" action="{% url 'resumen_fecha' %}" class="space-y-6">
+            <form method="POST" action="{% url 'resumen_rango_fecha' %}" class="space-y-6">
                 {% csrf_token %}
                 <div class="grid md:grid-cols-2 gap-6">
                     <!-- Selector de fecha -->
                     <div class="space-y-2">
-                        <label for="fecha" class="block text-lg font-medium text-gray-300">
+                        <label for="fecha_inicio" class="block text-lg font-medium text-gray-300">
                             <div class="flex items-center space-x-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -36,7 +36,7 @@
                         </label>
                         <input type="date" 
                                id="fecha_inicio" 
-                               name="fecha_fin" 
+                               name="fecha_inicio" 
                                required 
                                class="w-full px-4 py-2 bg-slate-800/50 border-2 border-gray-600 rounded-xl
                                       focus:outline-none focus:border-blue-400 hover:border-blue-400
@@ -45,7 +45,7 @@
                     <div class="space-y-2">
                         <label for="fecha_fin" class="block text-lg font-medium text-gray-300">
                             <div class="flex items-center space-x-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                                 <span>A:</span>
@@ -56,7 +56,7 @@
                                name="fecha_fin" 
                                required 
                                class="w-full px-4 py-2 bg-slate-800/50 border-2 border-gray-600 rounded-xl
-                                      focus:outline-none focus:border-purple-400 hover:border-purple-400
+                                      focus:outline-none focus:border-purple-600 hover:border-purple-600
                                       transition-colors duration-300 text-gray-300">
                     </div>
 
@@ -75,7 +75,7 @@
                                 class="w-full px-4 py-2 bg-slate-800/50 border-2 border-gray-600 rounded-xl
                                        focus:outline-none focus:border-purple-400 hover:border-purple-400
                                        transition-colors duration-300 text-gray-300">
-                            <option value="">Todas las empresas</option>
+                            <option value="todas">Todas las empresas</option>
                             {% for empresa in empresas %}
                                 <option value="{{ empresa }}">{{ empresa }}</option>
                             {% endfor %}
@@ -99,12 +99,22 @@
         </div>
 
         <!-- Resumen de Mensajes -->
-        {% if total is not None %}
-            {%if empresa and fecha%}
-                <h2 class="text-2xl font-bold text-center m-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
-                    Resumen de Mensajes para la empresa {{ empresa }} en la fecha {{ fecha }}
-                </h2>
-            {%endif%}
+        {% if error %}
+            <div class="max-w-2xl mx-auto mb-12 backdrop-blur-sm bg-red-500/50 rounded-2xl p-8 border border-red-600 shadow-xl">
+                <p class="text-center text-lg font-medium text-red-100">{{ error }}</p>
+            </div>
+        {% elif total is not None %}
+            {% if empresa and fecha_inicio and fecha_fin %}
+                {% if empresa == "todas" %}
+                    <h2 class="text-xl font-bold text-center m-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+                        Resumen de Mensajes para todas las empresas de la fecha {{ fecha_inicio }} a la fecha {{ fecha_fin }}
+                    </h2>
+                {% else %}
+                    <h2 class="text-xl font-bold text-center m-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+                        Resumen de Mensajes para la empresa {{ empresa }} de la fecha {{ fecha_inicio }} a la fecha {{ fecha_fin }}
+                    </h2>
+                {% endif %}
+            {% endif %}
             <div class="max-w-4xl mx-auto grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Total -->            
                 <div class="backdrop-blur-sm bg-white/5 rounded-2xl p-6 border border-white/10 shadow-xl">
@@ -182,11 +192,10 @@
             // Configura el gráfico
             const ctx = document.getElementById('resumenChart').getContext('2d');
             const resumenChart = new Chart(ctx, {
-                type: 'bar', // Puedes cambiar a 'pie', 'doughnut', etc.
+                type: 'bar',
                 data: {
                     labels: ['Positivos', 'Negativos', 'Neutros'],
                     datasets: [{
-                        label: 'Resumen de Mensajes',
                         data: [positivos, negativos, neutros],
                         backgroundColor: [
                             'rgba(75, 192, 192, 0.6)', // Color para positivos
@@ -202,31 +211,30 @@
                     }]
                 },
                 options: {
+                    responsive: true,
                     scales: {
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                stepSize: 1,  // Esto asegurará que el gráfico tenga números enteros en el eje Y
-                                color: 'white'  // Color del texto del eje Y
+                                stepSize: 1,
+                                color: 'white'
                             },
                             grid: {
-                                color: 'rgba(255, 255, 255, 0.2)'  // Color de las líneas de la cuadrícula
+                                color: 'rgba(255, 255, 255, 0.2)'
                             }
                         },
                         x: {
                             ticks: {
-                                color: 'white'  // Color del texto del eje X
+                                color: 'white'
                             },
                             grid: {
-                                color: 'rgba(255, 255, 255, 0.2)'  // Color de las líneas de la cuadrícula
+                                color: 'rgba(255, 255, 255, 0.2)'
                             }
                         }
                     },
                     plugins: {
                         legend: {
-                            labels: {
-                                color: 'white'  // Color del texto de la leyenda
-                            }
+                            display: false  // Ocultamos la leyenda ya que no la necesitamos
                         },
                         tooltip: {
                             callbacks: {
@@ -234,14 +242,20 @@
                                     const labelIndex = context.dataIndex;
                                     const totalMsgs = [positivos, negativos, neutros][labelIndex];
                                     const percentage = ((totalMsgs / total) * 100).toFixed(2);
-                                    return `${context.dataset.label}: ${totalMsgs} (${percentage}%)`;
+                                    const labels = ['Positivos', 'Negativos', 'Neutros'];
+                                    return `${labels[labelIndex]}: ${totalMsgs} (${percentage}%)`;
                                 }
                             }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Resumen de Mensajes',
+                            color: 'white'
                         }
                     }
                 }
             });
-        </script>        
+        </script>
     </div>
 </body>
 </html>

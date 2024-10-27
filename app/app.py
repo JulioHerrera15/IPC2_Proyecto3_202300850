@@ -77,6 +77,11 @@ def detect_companies_and_services(text, companies_dict):
     
     return detected
 
+@app.route('/reset_session', methods=['GET'])
+def reset_session():
+    session.clear()
+    return jsonify({'status': 'success'})
+
 @app.route('/procesar_xml', methods=['POST'])
 def procesar_datos():
     try:
@@ -315,6 +320,59 @@ def resumen_fecha():
         'negativos': negativos,
         'neutros': neutros
     })
+
+from datetime import datetime
+
+@app.route('/resumen_rango_fecha', methods=['GET'])
+def resumen_rango_fecha():
+    # Obtener parámetros de fecha inicio, fin y empresa
+    fecha_inicio = request.args.get('fecha_inicio')
+    fecha_fin = request.args.get('fecha_fin')
+    empresa = request.args.get('empresa', 'todas')
+
+    # Convertir las fechas a objetos datetime
+    try:
+        fecha_inicio_dt = datetime.strptime(fecha_inicio, '%Y-%m-%d')
+        fecha_fin_dt = datetime.strptime(fecha_fin, '%Y-%m-%d')
+    except ValueError:
+        return jsonify({'error': 'Formato de fecha no válido'}), 400
+
+    # Obtener mensajes de la sesión
+    messages = session.get('messages', [])
+    logger.debug(f"Mensajes recuperados de la sesión antes de aplicar filtros: {messages}")
+
+    # Filtrar por rango de fechas convirtiendo `msg['date']` también a datetime
+    filtered_messages = []
+    for msg in messages:
+        try:
+            msg_date = datetime.strptime(msg['date'], '%d/%m/%Y')
+            if fecha_inicio_dt <= msg_date <= fecha_fin_dt:
+                filtered_messages.append(msg)
+        except ValueError:
+            logger.warning(f"Formato de fecha no válido en el mensaje: {msg['date']}")
+
+    logger.debug(f"Mensajes después de filtrar por rango de fechas ({fecha_inicio} - {fecha_fin}): {filtered_messages}")
+
+    # Filtrar por empresa si es especificada
+    if empresa.lower() != 'todas':
+        filtered_messages = [msg for msg in filtered_messages if any(c['nombre'] == empresa for c in msg['companies'])]
+        logger.debug(f"Mensajes después de filtrar por empresa ({empresa}): {filtered_messages}")
+
+    # Contar mensajes clasificados
+    total = len(filtered_messages)
+    positivos = sum(1 for msg in filtered_messages if msg['sentiment'] == 'positivo')
+    negativos = sum(1 for msg in filtered_messages if msg['sentiment'] == 'negativo')
+    neutros = sum(1 for msg in filtered_messages if msg['sentiment'] == 'neutro')
+
+    logger.debug(f"Conteos - Total: {total}, Positivos: {positivos}, Negativos: {negativos}, Neutros: {neutros}")
+
+    return jsonify({
+        'total': total,
+        'positivos': positivos,
+        'negativos': negativos,
+        'neutros': neutros
+    })
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

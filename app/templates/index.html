@@ -134,16 +134,20 @@
             </button>
 
             <!-- Botón Reset -->
-            <button class="relative overflow-hidden rounded-full bg-gradient-to-r from-rose-500 to-pink-500 p-[2px] transition-all duration-300 hover:opacity-90 hover:scale-[1.02] hover:shadow-lg group">
-                <div class="relative px-8 py-3 bg-slate-900 rounded-full group-hover:bg-slate-800">
-                    <div class="flex items-center justify-center text-white font-semibold">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        Reset
+            <!-- Botón Reset -->
+            <form method="POST" action="{% url 'reset' %}">
+                {% csrf_token %}
+                <button type="submit" class="relative overflow-hidden rounded-full bg-gradient-to-r from-rose-500 to-pink-500 p-[2px] transition-all duration-300 hover:opacity-90 hover:scale-[1.02] hover:shadow-lg group">
+                    <div class="relative px-8 py-3 bg-slate-900 rounded-full group-hover:bg-slate-800">
+                        <div class="flex items-center justify-center text-white font-semibold">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Reset
+                        </div>
                     </div>
-                </div>
-            </button>
+                </button>
+            </form>
         </div>
     </div>
 
