@@ -4,13 +4,18 @@ from datetime import datetime
 import re
 import logging
 from flask_cors import CORS
+from flask_session import Session
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.secret_key = 'cL4V3s3cr3t4'  # Cambia esto a una clave secreta segura
-CORS(app)
+app.config['SESSION_TYPE'] = 'filesystem'
+app.secret_key = 'cL4V3s3cr3t4'
+
+Session(app)
+
+CORS(app, supports_credentials=True)
 
 class Message:
     def __init__(self, date, social_network, user, companies, text):
@@ -79,15 +84,15 @@ def procesar_datos():
         if not file:
             return jsonify({'error': 'No se recibió ningún archivo'}), 400
 
-        # Parse input XML
+        # Leer archivo XML
         tree = ET.parse(file)
         root = tree.getroot()
 
-        # Extract dictionary data
+        # Extraer palabras positivas y negativas
         positive_words = [word.text for word in root.findall('.//sentimientos_positivos/palabra')]
         negative_words = [word.text for word in root.findall('.//sentimientos_negativos/palabra')]
         
-        # Extract companies and services
+        # Extraer empresas y servicios
         companies = []
         for empresa in root.findall('.//empresas_analizar/empresa'):
             company_dict = {
@@ -102,7 +107,7 @@ def procesar_datos():
                 company_dict['servicios'].append(service_dict)
             companies.append(company_dict)
 
-        # Process messages
+        # Procesar mensajes
         messages = []
         for mensaje in root.findall('.//lista_mensajes/mensaje'):
             message_text = mensaje.text
@@ -122,13 +127,15 @@ def procesar_datos():
                     'sentiment': sentiment
                 })
 
-        # Store messages in session
+        # Almacenar mensajes en la sesión
         session['messages'] = messages
+        logger.debug(f"Mensajes almacenados en la sesión: {messages}")
 
-        # Generate output XML
+
+        # Crear XML de salida
         output_root = ET.Element('lista_respuestas')
         
-        # Group messages by date
+        # Agrupar mensajes por fecha
         messages_by_date = {}
         for msg in messages:
             date = msg['date']
@@ -136,7 +143,7 @@ def procesar_datos():
                 messages_by_date[date] = []
             messages_by_date[date].append(msg)
 
-        # Create response elements
+        # Crear elementos
         for date, date_messages in messages_by_date.items():
             respuesta = ET.SubElement(output_root, 'respuesta')
             
@@ -161,7 +168,7 @@ def procesar_datos():
             
             analisis = ET.SubElement(respuesta, 'analisis')
             
-            # Process companies
+            # Procesar datos de empresas
             companies_data = {}
             for msg in date_messages:
                 for company in msg['companies']:
@@ -201,7 +208,7 @@ def procesar_datos():
                     else:
                         companies_data[company_name]['servicios'][service_name]['neutros'] += 1
 
-            # Add companies to XML
+            # Añadir empresas al XML
             for company_name, company_data in companies_data.items():
                 empresa = ET.SubElement(analisis, 'empresa')
                 empresa.set('nombre', company_name)
@@ -237,7 +244,7 @@ def procesar_datos():
                     neutros = ET.SubElement(mensajes_servicio, 'neutros')
                     neutros.text = str(service_data['neutros'])
 
-        # Convert to string
+        # Convertir XML a string
         output_xml = ET.tostring(output_root, encoding='unicode', method='xml')
         
         return jsonify({
@@ -248,10 +255,66 @@ def procesar_datos():
         logger.error(f"Error processing XML: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/peticiones', methods=['GET'])
+def peticiones():
+    messages = session.get('messages', [])
+    logger.debug(f"Mensajes recuperados: {messages}")
+    return jsonify({'messages': messages})
+
+@app.route('/obtener_empresas', methods=['GET'])
+def obtener_empresas():
+    messages = session.get('messages', [])
+    empresas = set()
+    for message in messages:
+        for company in message['companies']:
+            empresas.add(company['nombre'])
+    return jsonify({'empresas': list(empresas)})
+
+
 @app.route('/consultar_datos', methods=['GET'])
 def consultar_datos():
     messages = session.get('messages', [])
     return render_template('resultados.html', messages=messages)
+
+@app.route('/resumen_fecha', methods=['GET'])
+def resumen_fecha():    
+    # Obtener parámetros de fecha y empresa
+    fecha = request.args.get('fecha')
+    empresa = request.args.get('empresa', 'todas')
+
+    # Convertir la fecha al formato 'dd/mm/yyyy' si no está en ese formato
+    try:
+        fecha = datetime.strptime(fecha, '%Y-%m-%d').strftime('%d/%m/%Y')
+    except ValueError:
+        pass  # Si ya está en el formato correcto, no hacer nada
+
+    # Obtener mensajes de la sesión
+    messages = session.get('messages', [])
+    logger.debug(f"Mensajes recuperados de la sesión antes de aplicar filtros: {messages}")
+
+    # Filtrar por fecha
+    messages = [msg for msg in messages if msg['date'] == fecha]
+    logger.debug(f"Mensajes después de filtrar por fecha ({fecha}): {messages}")
+    
+    # Filtrar por empresa si es especificada
+    if empresa.lower() != 'todas':
+        messages = [msg for msg in messages if any(c['nombre'] == empresa for c in msg['companies'])]
+        logger.debug(f"Mensajes después de filtrar por empresa ({empresa}): {messages}")    
+
+    # Contar mensajes clasificados
+    total = len(messages)
+    positivos = sum(1 for msg in messages if msg['sentiment'] == 'positivo')
+    negativos = sum(1 for msg in messages if msg['sentiment'] == 'negativo')
+    neutros = sum(1 for msg in messages if msg['sentiment'] == 'neutro')
+    
+    logger.debug(f"Conteos - Total: {total}, Positivos: {positivos}, Negativos: {negativos}, Neutros: {neutros}")
+
+    return jsonify({
+        'total': total,
+        'positivos': positivos,
+        'negativos': negativos,
+        'neutros': neutros
+    })
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

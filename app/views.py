@@ -12,6 +12,9 @@ logger = logging.getLogger(__name__)
 
 api = 'http://localhost:5000'
 
+# Crear una sesión de requests que mantendrá las cookies entre solicitudes
+flask_session = requests.Session()
+
 def index(request):
     context = {
         'xml_content': '',
@@ -79,7 +82,8 @@ def procesar_datos(request):
                             'archivo': ('archivo.xml', f, 'application/xml')
                         }
                         logger.debug("Enviando solicitud a Flask")
-                        response = requests.post(f'{api}/procesar_xml', files=files)
+                        # Usa la sesión persistente para hacer la solicitud POST
+                        response = flask_session.post(f'{api}/procesar_xml', files=files)
                         logger.debug(f"Respuesta recibida: {response.status_code}")
                     
                     if response.status_code == 200:
@@ -109,8 +113,65 @@ def procesar_datos(request):
     return render(request, 'index.html', context)
 
 
-def peticiones(request):
-    return render(request, 'peticiones.html')
+def peticiones(request):    
+    try:
+        # Usa la misma sesión para hacer la solicitud GET
+        response = flask_session.get(f'{api}/peticiones')
+        logger.debug(f"Respuesta cruda de Flask: {response.text}")
+        if response.status_code == 200:
+            data = response.json().get('messages', [])
+            logger.debug(f"Mensajes recibidos de Flask: {data}")
+        else:
+            logger.error("Error al obtener mensajes desde Flask.")
+            data = []
+    except Exception as e:
+        logger.error(f"Error conectando con Flask: {str(e)}")
+        data = []
+
+    return render(request, 'peticiones.html', {'messages': data})
+
+def resumen_fecha(request):
+    context = {'total': 0, 'positivos': 0, 'negativos': 0, 'neutros': 0, 'empresas': []}
+    
+    # Intento de obtener la lista de empresas al cargar la página
+    try:
+        response = flask_session.get(f'{api}/obtener_empresas')
+        if response.status_code == 200:
+            empresas_data = response.json()
+            context['empresas'] = empresas_data.get('empresas', [])
+            
+            logger.debug(f"Lista de empresas obtenida: {context['empresas']}")
+            
+            if request.method == 'POST':
+                # Recibir los parámetros de la solicitud POST
+                fecha = request.POST.get('fecha')
+                empresa = request.POST.get('empresa', 'todas')
+
+                context['fecha'] = fecha
+                context['empresa'] = empresa
+                logger.debug(f"Parámetros recibidos - Fecha: {fecha}, Empresa: {empresa}")
+                
+                try:
+                    # Llamar a la API Flask para obtener el resumen de mensajes según fecha y empresa
+                    response = flask_session.get(f'{api}/resumen_fecha', params={'fecha': fecha, 'empresa': empresa})
+                    if response.status_code == 200:
+                        data = response.json()
+                        context.update(data)
+                        
+                        logger.debug(f"Datos de resumen obtenidos: {data}")
+                    else:
+                        logger.error(f"Error en la solicitud a Flask: {response.status_code}")
+                except Exception as e:
+                    logger.error(f"Error conectando con Flask: {str(e)}")
+        else:
+            logger.error("Error al obtener la lista de empresas desde Flask.")
+    except Exception as e:
+        logger.error(f"Error conectando con Flask: {str(e)}")
+    
+    logger.debug(f"Contexto final para la plantilla: {context}")
+    return render(request, 'resumen_fecha.html', context)
+
+
 
 def ayuda(request):
     return render(request, 'ayuda.html')

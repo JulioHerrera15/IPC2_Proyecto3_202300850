@@ -6,4 +6,5 @@ urlpatterns = [
     path('procesar_xml', views.procesar_datos, name='procesar_datos'),    
     path('peticiones', views.peticiones, name='peticiones'),
     path('ayuda', views.ayuda, name='ayuda'),
+    path('resumen_fecha', views.resumen_fecha, name='resumen_fecha'),
 ]
