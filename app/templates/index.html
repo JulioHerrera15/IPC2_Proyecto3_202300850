@@ -7,69 +7,166 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <title>Tecnologías Chapinas S.A</title>
 </head>
-<body class="dark:bg-slate-900 text-white">
+<body class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
     {% include "navbar.html" %}
-    <div class="container mx-auto m-10">
-        <h1 class="text-4xl font-bold text-center mt-10">Bienvenido a Tecnologías Chapinas S.A</h1>
-        <p class="text-center mt-5">Carga un archivo XML para empezar</p>
-        
-        <!-- Formulario de carga de archivo y botón de procesar -->
-        <form action="{% url 'procesar_datos' %}" method="post" enctype="multipart/form-data" class="space-y-4 mt-10">                                             
-            {% csrf_token %}
-            <div class="relative group">
-                <label for="archivo" class="block text-sm font-medium text-gray-300 mb-2">Archivo XML</label>
-                <input type="file" required name="archivo" accept=".xml" id="archivo" 
-                       class="block w-full text-sm text-gray-400
-                              file:mr-4 file:py-2 file:px-4
-                              file:rounded-full file:border-0
-                              file:text-sm file:font-semibold
-                              file:bg-blue-700
-                              file:text-gray-200
-                              hover:file:bg-blue-800                              
-                              cursor-pointer
-                              border-2 border-slate-600 rounded-full
-                              transition-all duration-300
-                              focus:outline-none focus:border-blue-500">
-            </div>
-            <button type="submit" class="w-full relative group overflow-hidden rounded-full">
-                <div class="absolute inset-0 bg-blue-500 group-hover:bg-blue-700 transition-transform duration-300 group-hover:scale-105"></div>
-                <div class="relative px-4 py-2 flex items-center justify-center text-white font-semibold">
-                    Procesar archivo
+    
+    <div class="container mx-auto px-4 py-12">
+        <!-- Encabezado -->
+        <div class="max-w-3xl mx-auto text-center space-y-6 mb-12">
+            <h1 class="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 p-5">
+                Bienvenido a Tecnologías Chapinas S.A
+            </h1>
+            <p class="text-xl text-gray-300">Carga un archivo XML para empezar</p>
+        </div>
+
+        <!-- Formulario de carga -->
+        <div class="max-w-2xl mx-auto mb-12 backdrop-blur-sm bg-white/5 rounded-2xl p-8 border border-white/10 shadow-xl">
+            <form action="{% url 'procesar_datos' %}" method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+                <div class="relative group">
+                    <label for="archivo" class="block text-lg font-medium text-gray-300 mb-3">Archivo XML</label>
+                    <div class="relative">
+                        <input type="file" 
+                               required 
+                               name="archivo" 
+                               accept=".xml" 
+                               id="archivo"
+                               class="block w-full text-sm text-gray-300
+                                      file:mr-4 file:py-3 file:px-6
+                                      file:rounded-full file:border-0
+                                      file:text-sm file:font-semibold
+                                      file:bg-gradient-to-r file:from-blue-500 file:to-purple-500
+                                      file:text-white
+                                      hover:file:opacity-90
+                                      cursor-pointer
+                                      border-2 border-gray-600 rounded-full
+                                      transition-all duration-300
+                                      focus:outline-none focus:border-blue-400
+                                      hover:border-blue-400
+                                      bg-slate-800/50">
+                    </div>
                 </div>
-            </button>
-        </form>
+                
+                <button type="submit" 
+                        class="w-full relative overflow-hidden rounded-full bg-gradient-to-r from-blue-500 to-purple-500 p-[2px] transition-all duration-300 hover:opacity-90 hover:scale-[1.02]">
+                    <div class="relative px-6 py-3 bg-slate-900 rounded-full">
+                        <div class="flex items-center justify-center text-white font-semibold">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            Procesar archivo
+                        </div>
+                    </div>
+                </button>
+            </form>
+        </div>
 
         {% if error %}
-        <div class="mt-4 p-4 bg-red-500 text-white rounded-lg">
-            {{ error }}
+        <div class="max-w-2xl mx-auto mb-12">
+            <div class="bg-gradient-to-r from-red-500/20 to-red-500/30 border border-red-500/50 backdrop-blur-sm text-white p-4 rounded-xl shadow-lg">
+                <div class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {{ error }}
+                </div>
+            </div>
         </div>
         {% endif %}
 
-        <!-- Contenido de las columnas -->
-        <div class="flex space-x-4 mt-10">
-            <!-- Primera columna -->
-            <div class="w-1/2 bg-gray-500/50 border rounded-xl p-8">
-                <h2 class="text-2xl font-bold text-center">Entrada</h2>
-                <div class="p-4 border border-gray-300 rounded m-5 bg-gray-100 h-96 dark:bg-slate-800 overflow-auto">
+        <!-- Contenedores de entrada y salida -->
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Contenedor de entrada -->
+            <div class="backdrop-blur-sm bg-white/5 rounded-2xl p-6 border border-white/10 shadow-xl">
+                <h2 class="text-2xl font-bold text-center mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+                    Entrada
+                </h2>
+                <div class="p-6 bg-slate-800/80 rounded-xl border border-white/5 h-96 overflow-auto custom-scrollbar">
                     {% if xml_content %}
-                        <pre class="text-gray-800 dark:text-gray-200">{{ xml_content }}</pre>
+                    <pre class="text-gray-300 font-mono">{{ xml_content }}</pre>
                     {% else %}
-                        <p class="text-center text-gray-400">No se ha cargado ningún archivo</p>
+                    <div class="flex items-center justify-center h-full text-gray-400">
+                        <div class="text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            <p>No se ha cargado ningún archivo</p>
+                        </div>
+                    </div>
                     {% endif %}
                 </div>
             </div>
-            <!-- Segunda columna -->
-            <div class="w-1/2 bg-gray-500/50 border rounded-xl p-8">
-                <h2 class="text-2xl font-bold text-center">Salida</h2>
-                <div class="p-4 border border-gray-300 rounded m-5 bg-gray-100 dark:bg-slate-800 h-96 overflow-auto">
+
+            <!-- Contenedor de salida -->
+            <div class="backdrop-blur-sm bg-white/5 rounded-2xl p-6 border border-white/10 shadow-xl">
+                <h2 class="text-2xl font-bold text-center mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+                    Salida
+                </h2>
+                <div class="p-6 bg-slate-800/80 rounded-xl border border-white/5 h-96 overflow-auto custom-scrollbar">
                     {% if processed_content %}
-                        <pre class="text-gray-800 dark:text-gray-200">{{ processed_content }}</pre>
+                    <pre class="text-gray-300 font-mono">{{ processed_content }}</pre>
                     {% else %}
-                        <p class="text-center text-gray-400">No se ha procesado ningún archivo</p>
+                    <div class="flex items-center justify-center h-full text-gray-400">
+                        <div class="text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <p>No se ha procesado ningún archivo</p>
+                        </div>
+                    </div>
                     {% endif %}
                 </div>
             </div>
         </div>
+
+        <!-- Nuevos botones -->
+        <div class="max-w-2xl mx-auto mt-12 flex gap-4 justify-center">
+            <!-- Botón Enviar -->
+            <button class="relative overflow-hidden rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 p-[2px] transition-all duration-300 hover:opacity-90 hover:scale-[1.02] hover:shadow-lg group">
+                <div class="relative px-8 py-3 bg-slate-900 rounded-full group-hover:bg-slate-800">
+                    <div class="flex items-center justify-center text-white font-semibold">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                        </svg>
+                        Enviar
+                    </div>
+                </div>
+            </button>
+
+            <!-- Botón Reset -->
+            <button class="relative overflow-hidden rounded-full bg-gradient-to-r from-rose-500 to-pink-500 p-[2px] transition-all duration-300 hover:opacity-90 hover:scale-[1.02] hover:shadow-lg group">
+                <div class="relative px-8 py-3 bg-slate-900 rounded-full group-hover:bg-slate-800">
+                    <div class="flex items-center justify-center text-white font-semibold">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Reset
+                    </div>
+                </div>
+            </button>
+        </div>
     </div>
+
+    <style>
+        /* Estilo personalizado para la barra de desplazamiento */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
 </body>
 </html>
