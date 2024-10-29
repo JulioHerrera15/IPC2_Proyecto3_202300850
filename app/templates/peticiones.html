@@ -23,7 +23,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12 max-w-6xl mx-auto">
             <!-- Consultar datos -->
             <div class="group">
-                <a href="#" class="block p-6 bg-gradient-to-br from-blue-500/10 to-blue-500/30 rounded-xl border border-blue-500/20 backdrop-blur-sm shadow-lg transform transition duration-300 hover:scale-105 hover:shadow-blue-500/25">
+                <a href="/consultar_datos" class="block p-6 bg-gradient-to-br from-blue-500/10 to-blue-500/30 rounded-xl border border-blue-500/20 backdrop-blur-sm shadow-lg transform transition duration-300 hover:scale-105 hover:shadow-blue-500/25">
                     <div class="flex flex-col items-center space-y-4">
                         <div class="p-3 bg-blue-500/20 rounded-full">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -65,7 +65,7 @@
 
             <!-- Ver reporte en PDF -->
             <div class="group">
-                <a href="#" class="block p-6 bg-gradient-to-br from-purple-500/10 to-purple-500/30 rounded-xl border border-purple-500/20 backdrop-blur-sm shadow-lg transform transition duration-300 hover:scale-105 hover:shadow-purple-500/25">
+                <a href="{% url 'descargar_pdf'%}" class="block p-6 bg-gradient-to-br from-purple-500/10 to-purple-500/30 rounded-xl border border-purple-500/20 backdrop-blur-sm shadow-lg transform transition duration-300 hover:scale-105 hover:shadow-purple-500/25">
                     <div class="flex flex-col items-center space-y-4">
                         <div class="p-3 bg-purple-500/20 rounded-full">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -79,7 +79,7 @@
 
             <!-- Mensajes de prueba -->
             <div class="group">
-                <a href="#" class="block p-6 bg-gradient-to-br from-cyan-500/10 to-cyan-500/30 rounded-xl border border-cyan-500/20 backdrop-blur-sm shadow-lg transform transition duration-300 hover:scale-105 hover:shadow-cyan-500/25">
+                <a href="/prueba_mensaje" class="block p-6 bg-gradient-to-br from-cyan-500/10 to-cyan-500/30 rounded-xl border border-cyan-500/20 backdrop-blur-sm shadow-lg transform transition duration-300 hover:scale-105 hover:shadow-cyan-500/25">
                     <div class="flex flex-col items-center space-y-4">
                         <div class="p-3 bg-cyan-500/20 rounded-full">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -16,7 +16,50 @@
             <h1 class="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 p-5">
                 Mensajes de prueba
             </h1>
-            <p class="text-xl text-gray-300">Carga un archivo XML para empezar</p>
+            <p class="text-xl text-gray-300">Escribe un mensaje (en formato XML) en el campo de texto</p>
+
+            <form action="{% url 'prueba_mensaje' %}" method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+                <div class="relative group">
+                    <label for="mensaje" class="block text-lg font-medium text-gray-300 mb-3">Mensaje XML</label>
+                    <div class="relative">
+                        <textarea name="mensaje" 
+                                  id="mensaje" 
+                                  class="block w-full text-sm text-gray-300
+                                         file:mr-4 file:py-3 file:px-6
+                                         file:rounded-lg file:border-0
+                                         file:text-sm file:font-semibold
+                                         file:bg-gradient-to-r file:from-blue-500 file:to-purple-500
+                                         file:text-white
+                                         hover:file:opacity-90                                         
+                                         border-2 border-gray-600 rounded-lg
+                                         transition-all duration-300
+                                         focus:outline-none focus:border-blue-400
+                                         hover:border-blue-400
+                                         bg-slate-800/50
+                                         h-48"></textarea>
+                    </div>
+                </div>
+                
+                <button type="submit" 
+                        class="w-full relative overflow-hidden rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 p-[2px] transition-all duration-300 hover:opacity-90 hover:scale-[1.02]">
+                    <div class="relative px-6 py-3 bg-slate-900 rounded-lg">
+                        <div class="flex items center justify-center text-white font-semibold">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            Procesar mensaje
+                        </div>
+                    </div>
+                </button>
+            </form>
+
+            {% if respuesta_xml %}
+                <h2 class="text-xl font-semibold mt-8">Respuesta XML</h2>
+                <pre class="p-4 bg-gray-800 rounded mt-2 text-green-500 whitespace-pre-wrap">{{ respuesta_xml }}</pre>
+            {% elif error %}
+                <p class="mt-8 text-red-500">{{ error }}</p>
+            {% endif %}
         </div>
 
         

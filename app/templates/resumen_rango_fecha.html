@@ -181,6 +181,39 @@
         <!-- Contenedor del gráfico -->
         <canvas id="resumenChart" class="mt-7" width="400" height="200"></canvas>
 
+        <!-- Botón para guardar la gráfica -->
+        <button id="saveGraph" class="w-full relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 p-[2px] transition-all duration-300 hover:opacity-90 hover:scale-[1.02]">
+            <div class="relative px-6 py-3 bg-slate-900 rounded-xl">
+                <div class="flex items-center justify-center text-white font-semibold">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Guardar gráfica
+                </div>
+            </div>
+        </button>
+
+        <!-- Script para convertir la gráfica a imagen y enviarla al servidor -->
+        <script>
+            document.getElementById('saveGraph').addEventListener('click', function() {
+                const canvas = document.getElementById('resumenChart');
+                const dataUrl = canvas.toDataURL('image/png');
+                
+                fetch("{% url 'store_chart_image' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ image: dataUrl })
+                }).then(response => {
+                    if (response.ok) {
+                        alert('Gráfica guardada exitosamente.');
+                    }
+                });
+            });
+        </script>
+
         <!-- Script del gráfico -->
         <script>
             // Verifica que Django esté pasando los datos correctamente

@@ -64,18 +64,24 @@ def detect_companies_and_services(text, companies_dict):
     
     for company in companies_dict:
         company_name = company['nombre'].strip().lower()
-        if company_name in text_lower:
+        # Verificar si el nombre de la empresa está en el texto
+        if re.search(r'\b' + re.escape(company_name) + r'\b', text_lower):
             for service in company['servicios']:
                 service_name = service['nombre'].strip().lower()
+                # Normalizar alias para evitar espacios o mayúsculas
                 aliases = [alias.strip().lower() for alias in service.get('alias', [])]
                 
-                if service_name in text_lower or any(alias in text_lower for alias in aliases):
+                # Verificar si el nombre del servicio o algún alias está en el texto
+                if re.search(r'\b' + re.escape(service_name) + r'\b', text_lower) or \
+                    any(re.search(r'\b' + re.escape(alias) + r'\b', text_lower) for alias in aliases):
                     detected.append({
                         'nombre': company['nombre'].strip(),
                         'servicio': service['nombre'].strip()
                     })
-    
+                    logger.debug(f"Empresa '{company['nombre']}' y servicio '{service['nombre']}' detectados en el mensaje.")
+
     return detected
+
 
 @app.route('/reset_session', methods=['GET'])
 def reset_session():
@@ -96,6 +102,11 @@ def procesar_datos():
         # Extraer palabras positivas y negativas
         positive_words = [word.text for word in root.findall('.//sentimientos_positivos/palabra')]
         negative_words = [word.text for word in root.findall('.//sentimientos_negativos/palabra')]
+
+        # Log palabras positivas y negativas
+        logger.debug(f"Palabras positivas extraídas: {positive_words}")
+        logger.debug(f"Palabras negativas extraídas: {negative_words}")
+
         
         # Extraer empresas y servicios
         companies = []
@@ -111,6 +122,17 @@ def procesar_datos():
                 }
                 company_dict['servicios'].append(service_dict)
             companies.append(company_dict)
+        
+        # Log empresas extraídas
+        logger.debug(f"Empresas extraídas: {companies}")
+
+        # Almacenar empresas y palabras en la sesión
+        session['companies'] = companies
+        session['positive_words'] = positive_words
+        session['negative_words'] = negative_words
+        session.modified = True
+        logger.debug("Datos almacenados en la sesión con éxito")        
+
 
         # Procesar mensajes
         messages = []
@@ -273,13 +295,42 @@ def obtener_empresas():
     for message in messages:
         for company in message['companies']:
             empresas.add(company['nombre'])
+        logger.debug(f"Empresa detectada: {company['nombre']}")           
+    
     return jsonify({'empresas': list(empresas)})
+    
 
-
-@app.route('/consultar_datos', methods=['GET'])
-def consultar_datos():
+@app.route('/obtener_servicios', methods=['GET'])
+def obtener_servicios():
     messages = session.get('messages', [])
-    return render_template('resultados.html', messages=messages)
+    servicios = set()
+    for message in messages:
+        for company in message['companies']:
+            servicios.add(company['servicio'])
+            logger.debug(f"Servicio detectado: {company['servicio']}")
+    return jsonify({'servicios': list(servicios)})
+
+@app.route('/obtener_alias', methods=['GET'])
+def obtener_alias():
+    companies = session.get('companies', [])
+    servicios_con_alias = {}
+    for company in companies:
+        for servicio in company['servicios']:
+            if 'alias' in servicio:
+                servicios_con_alias[servicio['nombre']] = servicio['alias']
+                for alias_item in servicio['alias']:
+                    logger.debug(f"Alias detectado: {alias_item} para servicio: {servicio['nombre']}")
+            else:
+                logger.debug(f"Servicio sin 'alias': {servicio}")
+    return jsonify({'servicios_con_alias': servicios_con_alias})
+
+@app.route('/obtener_palabras', methods=['GET'])
+def obtener_palabras():
+    positive_words = session.get('positive_words', [])
+    negative_words = session.get('negative_words', [])
+    logger.debug(f"Palabras positivas recuperadas: {positive_words}")
+    logger.debug(f"Palabras negativas recuperadas: {negative_words}")
+    return jsonify({'positive_words': positive_words, 'negative_words': negative_words})
 
 @app.route('/resumen_fecha', methods=['GET'])
 def resumen_fecha():    
@@ -373,6 +424,110 @@ def resumen_rango_fecha():
         'neutros': neutros
     })
 
+# Endpoint para procesar el mensaje individual
+@app.before_request
+def before_request():
+    logger.debug(f"Contenido de la sesión antes de la solicitud: {session.items()}")
+
+@app.route('/procesar_mensaje', methods=['POST'])
+def procesar_mensaje():
+    data = request.get_json()
+    mensaje = data.get('mensaje')
+    empresas = data.get('empresas', [])
+    positive_words = data.get('positive_words', [])
+    negative_words = data.get('negative_words', [])
+    
+    try:
+        logger.debug(f"Mensaje XML recibido: {mensaje}")
+        logger.debug(f"Empresas recibidas: {empresas}")
+        logger.debug(f"Palabras positivas recibidas: {positive_words}")
+        logger.debug(f"Palabras negativas recibidas: {negative_words}")
+
+        # Parsear el mensaje XML de entrada
+        root = ET.fromstring(mensaje)
+        mensaje_texto = root.text.strip().lower()  # Convertir a minúsculas para normalizar
+        logger.debug(f"Mensaje de texto procesado: {mensaje_texto}")
+        
+        # Extraer información del mensaje usando regex
+        fecha = re.search(r"\d{2}/\d{2}/\d{4}", mensaje_texto).group(0)
+        usuario = re.search(r"usuario:\s*(\S+)", mensaje_texto).group(1)
+        red_social = re.search(r"red social:\s*(\S+)", mensaje_texto).group(1)
+        logger.debug(f"Fecha extraída: {fecha}, Usuario extraído: {usuario}, Red social extraída: {red_social}")
+
+        # Normalizar listas de palabras positivas y negativas
+        positive_words = [word.lower().strip() for word in positive_words]
+        negative_words = [word.lower().strip() for word in negative_words]
+
+        # Contar palabras positivas y negativas en el mensaje
+        pos_count = sum(1 for word in re.findall(r'\b\w+\b', mensaje_texto) if word in positive_words)
+        neg_count = sum(1 for word in re.findall(r'\b\w+\b', mensaje_texto) if word in negative_words)
+        logger.debug(f"Palabras positivas contadas: {pos_count}")
+        logger.debug(f"Palabras negativas contadas: {neg_count}")
+
+        # Análisis de sentimiento
+        sentimiento_total = pos_count + neg_count
+        porcentaje_positivo = (pos_count / sentimiento_total) * 100 if sentimiento_total else 0
+        porcentaje_negativo = (neg_count / sentimiento_total) * 100 if sentimiento_total else 0
+        sentimiento_final = "positivo" if porcentaje_positivo > porcentaje_negativo else "negativo"
+        logger.debug(f"Análisis de sentimiento: {sentimiento_final}")
+
+        # Extraer empresas y servicios mencionados en el mensaje
+        logger.debug("Entrando a la función para detectar compañías y servicios")
+        empresas_detectadas = []
+        
+        for company in empresas:
+            if isinstance(company, dict) and 'nombre' in company and 'servicios' in company:
+                company_name = company['nombre'].strip().lower()
+                logger.debug(f"Procesando empresa: {company_name}")
+                
+                # Verificar si la empresa está mencionada en el mensaje
+                if re.search(r'\b' + re.escape(company_name) + r'\b', mensaje_texto):
+                    servicios_detectados = set()  # Usar set para evitar duplicados
+                    
+                    for servicio in company['servicios']:
+                        if isinstance(servicio, dict) and 'nombre' in servicio and 'alias' in servicio:
+                            # Verificar cada alias del servicio
+                            for alias in servicio['alias']:
+                                alias = alias.strip().lower()
+                                if re.search(r'\b' + re.escape(alias) + r'\b', mensaje_texto):
+                                    # Si encuentra el alias, agregar el nombre del servicio
+                                    servicios_detectados.add(servicio['nombre'].strip())
+                                    logger.debug(f"Alias '{alias}' encontrado para servicio: {servicio['nombre']}")
+                    
+                    # Solo agregar la empresa si se detectaron servicios
+                    if servicios_detectados:
+                        empresas_detectadas.append({
+                            'nombre': company['nombre'].strip(),
+                            'servicios': list(servicios_detectados)
+                        })
+                        logger.debug(f"Empresa detectada: {company['nombre']} con servicios: {list(servicios_detectados)}")
+
+        # Crear XML de salida
+        respuesta = ET.Element('respuesta')
+        ET.SubElement(respuesta, 'fecha').text = fecha
+        ET.SubElement(respuesta, 'red_social').text = red_social
+        ET.SubElement(respuesta, 'usuario').text = usuario
+        empresas_element = ET.SubElement(respuesta, 'empresas')
+
+        for empresa in empresas_detectadas:
+            empresa_element = ET.SubElement(empresas_element, 'empresa', nombre=empresa['nombre'])
+            for servicio in empresa['servicios']:
+                ET.SubElement(empresa_element, 'servicio').text = servicio
+
+        ET.SubElement(respuesta, 'palabras_positivas').text = str(pos_count)
+        ET.SubElement(respuesta, 'palabras_negativas').text = str(neg_count)
+        ET.SubElement(respuesta, 'sentimiento_positivo').text = f"{porcentaje_positivo:.2f}%"
+        ET.SubElement(respuesta, 'sentimiento_negativo').text = f"{porcentaje_negativo:.2f}%"
+        ET.SubElement(respuesta, 'sentimiento_analizado').text = sentimiento_final
+
+        # Convertir el XML de respuesta a cadena
+        respuesta_xml = ET.tostring(respuesta, encoding="utf-8").decode("utf-8")
+        logger.debug(f"XML de respuesta generado: {respuesta_xml}")
+        return jsonify({'respuesta_xml': respuesta_xml})
+
+    except Exception as e:
+        logger.error(f"Error al procesar el mensaje: {str(e)}")
+        return jsonify({'error': f"Error al procesar el mensaje: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

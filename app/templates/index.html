@@ -121,19 +121,6 @@
 
         <!-- Nuevos botones -->
         <div class="max-w-2xl mx-auto mt-12 flex gap-4 justify-center">
-            <!-- Botón Enviar -->
-            <button class="relative overflow-hidden rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 p-[2px] transition-all duration-300 hover:opacity-90 hover:scale-[1.02] hover:shadow-lg group">
-                <div class="relative px-8 py-3 bg-slate-900 rounded-full group-hover:bg-slate-800">
-                    <div class="flex items-center justify-center text-white font-semibold">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                        </svg>
-                        Enviar
-                    </div>
-                </div>
-            </button>
-
-            <!-- Botón Reset -->
             <!-- Botón Reset -->
             <form method="POST" action="{% url 'reset' %}">
                 {% csrf_token %}
